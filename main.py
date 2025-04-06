@@ -3,7 +3,7 @@ import csv
 import os
 import time
 from collections import defaultdict, Counter
-import qrcode  # Import the qrcode library
+#import qrcode  # Import the qrcode library
 from datetime import datetime  # Import datetime for date manipulation
 
 def load_products():
@@ -80,7 +80,7 @@ def pos_system_content(page: ft.Page):
     total_price = ft.Text("Total: $0.00", size=16, weight=ft.FontWeight.BOLD)
     cart_list = ft.Column()
     # product_list = ft.Column()  # Removed product_list
-    feedback_text = ft.Text("", size=14, color=ft.colors.GREEN)
+    feedback_text = ft.Text("", size=14, color=ft.Colors.GREEN)
     receipt_content = ft.Column()  # To store receipt
     customer_name_field = ft.TextField(label="Customer Name", width=250)
     customer_name = "Unknown" # default
@@ -96,8 +96,39 @@ def pos_system_content(page: ft.Page):
                 cart_summary[item[0]] = {"price": item[1], "amount": 1}
 
         for index, (name, details) in enumerate(cart_summary.items()):
-            remove_button = ft.IconButton(ft.icons.DELETE, style=ft.ButtonStyle(padding=ft.padding.all(0),shape=ft.RoundedRectangleBorder(radius=2)), on_click=lambda e, i=index: remove_from_cart(i))
-            cart_list.controls.append(ft.Container(content=ft.Row([ft.Text(f"{name} x{details['amount']} - ${details['price']:.2f}",color=ft.colors.BLUE, weight=ft.FontWeight.BOLD),remove_button],spacing=1, tight=True),padding=ft.padding.symmetric(vertical=-4)))  # Adjusts space between rows
+            def increase_quantity(e, product_name=name):
+                for item in cart:
+                    if item[0] == product_name:
+                        cart.append(item)  # Just add another item.
+                        break
+                update_cart()
+
+            def decrease_quantity(e, product_name=name):
+                for i, item in enumerate(cart):
+                    if item[0] == product_name:
+                        del cart[i] # Delete one matching item
+                        break
+                update_cart()
+
+            remove_button = ft.IconButton(ft.Icons.DELETE, style=ft.ButtonStyle(padding=ft.padding.all(0),shape=ft.RoundedRectangleBorder(radius=2)), on_click=lambda e, i=index: remove_from_cart(i))
+            increase_button = ft.IconButton(ft.Icons.ADD, style=ft.ButtonStyle(padding=ft.padding.all(0),shape=ft.RoundedRectangleBorder(radius=2)), on_click=increase_quantity)
+            decrease_button = ft.IconButton(ft.Icons.REMOVE, style=ft.ButtonStyle(padding=ft.padding.all(0),shape=ft.RoundedRectangleBorder(radius=2)), on_click=decrease_quantity)
+
+            cart_list.controls.append(
+                ft.Container(
+                    content=ft.Row(
+                        [
+                            ft.Text(f"{name} x{details['amount']} - ${details['price']:.2f}", color=ft.Colors.BLUE, weight=ft.FontWeight.BOLD),
+                            decrease_button,
+                            increase_button,
+                            remove_button
+                        ],
+                        spacing=1,
+                        tight=True
+                    ),
+                    padding=ft.padding.symmetric(vertical=-4)
+                )
+            )
             total += details["price"] * details["amount"]
         total_price.value = f"Total: ${total:.2f}"
         page.update()
@@ -130,8 +161,8 @@ def pos_system_content(page: ft.Page):
             timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
             total = 0
             receipt_content.controls.clear() # Clear previous receipt
-            receipt_content.controls.append(ft.Text("Receipt", size=20, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER))
-            receipt_content.controls.append(ft.Divider())
+            #receipt_content.controls.append(ft.Text("Receipt", size=20, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER))
+            #receipt_content.controls.append(ft.Divider())
             receipt_content.controls.append(ft.Text(f"Customer Name: {customer_name}", text_align=ft.TextAlign.CENTER))
 
             cart_summary = {} # Calculate the summary.
@@ -191,7 +222,7 @@ def pos_system_content(page: ft.Page):
     )
     update_product_list()  # Initialize the dropdown options
     refresh_button = ft.ElevatedButton("Refresh", on_click=refresh_products)
-    checkout_button = ft.ElevatedButton("Checkout", on_click=checkout, bgcolor=ft.colors.GREEN)
+    checkout_button = ft.ElevatedButton("Checkout", on_click=checkout, bgcolor=ft.Colors.GREEN)
 
     # Store the dropdown and receipt in page.window
     page.window.product_dropdown = product_dropdown
@@ -293,7 +324,7 @@ def transaction_history_content(page: ft.Page):
         # Reverse the order of filtered transactions before displaying
         for i, row in reversed(list(enumerate(filtered_transactions))):
             index, customer, product, price, amount, total, timestamp = row # include customer
-            delete_button = ft.IconButton(ft.icons.DELETE, on_click=lambda e, i=i: delete_transaction(e, i))
+            delete_button = ft.IconButton(ft.Icons.DELETE, on_click=lambda e, i=i: delete_transaction(e, i))
             transactions_list.controls.append(
                 ft.Container(
                     content=ft.Row(
@@ -349,7 +380,7 @@ def products_tab_content(page: ft.Page):
         products_list.controls.clear()
         products_data = load_products_data()
         for name, price in products_data:
-            delete_button = ft.IconButton(ft.icons.DELETE, on_click=lambda e, product_name=name: delete_product(e, product_name), data=name)
+            delete_button = ft.IconButton(ft.Icons.DELETE, on_click=lambda e, product_name=name: delete_product(e, product_name), data=name)
             products_list.controls.append(
                 ft.Row([
                     ft.Text(name),
@@ -413,7 +444,7 @@ def products_tab_content(page: ft.Page):
 
     update_products_list()
 
-    add_product_button = ft.ElevatedButton("Add Product", on_click=add_product, bgcolor=ft.colors.BLUE)
+    add_product_button = ft.ElevatedButton("Add Product", on_click=add_product, bgcolor=ft.Colors.BLUE)
     refresh_button = ft.ElevatedButton("Refresh", on_click=lambda _: update_products_list())
 
     return ft.Column(
@@ -517,7 +548,7 @@ def hello_4_content(page: ft.Page):
 
 def receipt_tab_content(page: ft.Page):
     # Retrieve the receipt content from  page.window
-    receipt_content = page.window.receipt_content if hasattr(page.window, 'receipt_content') else ft.Column()
+    receipt_content = page.window.receipt_content if hasattr(page.window, 'receipt_content')else ft.Column()
 
     return ft.Column(
         [
@@ -528,6 +559,7 @@ def receipt_tab_content(page: ft.Page):
     )
 
 def qr_code_tab_content(page: ft.Page):
+    '''
     # Generate the QR code
     data = "https://github.com/flet-dev/flet"  # Replace with your actual data
     qr = qrcode.QRCode(
@@ -547,8 +579,9 @@ def qr_code_tab_content(page: ft.Page):
 
     # Display the QR code
     qr_image = ft.Image(src=qr_filename, width=200, height=200)
+    '''
     # Add the image here
-    xyz_image = ft.Image(src="xyz.jpg", width=200, height=200) # Add this
+    xyz_image = ft.Image(src="xyz.jpg", width=300, height=350) # Add this
 
     # Clean up the temporary file when the page is disposed
     def dispose():
@@ -583,6 +616,9 @@ def main(page: ft.Page):
             ft.Tab(text="QR Code", content=qr_code_tab_content(page)),
         ],
         #animate_selected_content=True, # causes error
+        label_color=ft.Colors.RED,  # Set label color
+        overlay_color=ft.Colors.TRANSPARENT,  # Remove overlay color
+        indicator_color=ft.Colors.BLUE,  # Set indicator color
     )
 
     # Add a function to handle route changes for navigation
@@ -598,7 +634,8 @@ def main(page: ft.Page):
     page.on_route_change = route_change
     page.go(page.route)  # Initial navigation
 
-    page.add(tabs)
+    page.add(ft.Text("", size=20, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER),
+            tabs)
 
 if __name__ == "__main__":
     ft.app(target=main)
